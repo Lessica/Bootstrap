@@ -24,6 +24,7 @@ struct CreditsView: View {
                         .frame(maxWidth: 250, alignment: .leading)
                         .font(Font.system(size: 35))
                     Button {
+                        AutoBootstrapManager.shared.cancel()
                         Haptic.shared.play(.light)
                         withAnimation(niceAnimation) {
                             showCredits = false
@@ -68,6 +69,7 @@ struct CreditsView: View {
                 .bold()
             Spacer()
             Button {
+                AutoBootstrapManager.shared.cancel()
                 if let url = URL(string: link) {
                     UIApplication.shared.open(url)
                 }

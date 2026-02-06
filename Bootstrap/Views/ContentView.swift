@@ -8,6 +8,85 @@
 import SwiftUI
 import FluidGradient
 
+final class AutoBootstrapManager: ObservableObject {
+    static let shared = AutoBootstrapManager()
+
+    @Published private(set) var countdownSeconds: Int? = nil
+
+    private var countdownTimer: Timer?
+    private var bootstrapWorkItem: DispatchWorkItem?
+    private var started = false
+    private var finishedOrCanceled = false
+
+    private init() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleWillResignActive),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+    }
+
+    func startIfNeeded() {
+        guard !started, !finishedOrCanceled else { return }
+        guard !isSystemBootstrapped() else { return }
+        started = true
+
+        startCountdownTimer()
+        scheduleBootstrapAfter30Seconds()
+    }
+
+    func cancel() {
+        guard !finishedOrCanceled else { return }
+        finishedOrCanceled = true
+        invalidateAll()
+        DispatchQueue.main.async { [weak self] in
+            self?.countdownSeconds = nil
+        }
+    }
+
+    private func startCountdownTimer() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.countdownSeconds = 29
+            self.countdownTimer?.invalidate()
+            self.countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+                guard let self, !self.finishedOrCanceled else { return }
+                guard let current = self.countdownSeconds else { return }
+                if current <= 0 {
+                    self.countdownTimer?.invalidate()
+                    self.countdownTimer = nil
+                    self.countdownSeconds = 0
+                    return
+                }
+                self.countdownSeconds = current - 1
+            }
+        }
+    }
+
+    private func scheduleBootstrapAfter30Seconds() {
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, !self.finishedOrCanceled else { return }
+            self.finishedOrCanceled = true
+            self.invalidateAll()
+            bootstrapAction()
+        }
+        bootstrapWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30, execute: work)
+    }
+
+    private func invalidateAll() {
+        countdownTimer?.invalidate()
+        countdownTimer = nil
+        bootstrapWorkItem?.cancel()
+        bootstrapWorkItem = nil
+    }
+
+    @objc private func handleWillResignActive() {
+        cancel()
+    }
+}
+
 @objc class SwiftUIViewWrapper: NSObject {
     @objc static func createSwiftUIView() -> UIViewController {
         let viewController = UIHostingController(rootView: MainView())
@@ -36,6 +115,8 @@ struct MainView: View {
     @State private var newVersionAvailable = false
     @State private var newVersionReleaseURL:String = ""
     @State private var tweakEnable: Bool = !isSystemBootstrapped() || FileManager.default.fileExists(atPath: jbroot("/var/mobile/.tweakenabled"))
+
+    @ObservedObject private var autoBootstrap = AutoBootstrapManager.shared
     
     let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as! String
     
@@ -78,6 +159,7 @@ struct MainView: View {
                 
                 if newVersionAvailable {
                     Button {
+                        AutoBootstrapManager.shared.cancel()
                         UIApplication.shared.open(URL(string: newVersionReleaseURL)!)
                     } label: {
                         Label(
@@ -92,6 +174,7 @@ struct MainView: View {
                 
                 VStack {
                     Button {
+                        AutoBootstrapManager.shared.cancel()
                         Haptic.shared.play(.light)
                         bootstrapAction()
                     } label: {
@@ -115,19 +198,37 @@ struct MainView: View {
                                 .padding(25)
                             }
                         } else if isBootstrapInstalled() {
-                            Label(
-                                title: { Text("Bootstrap").bold() },
-                                icon: { Image(systemName: "chair") }
-                            )
-                            .frame(maxWidth: .infinity)
-                            .padding(25)
+                            if let seconds = autoBootstrap.countdownSeconds {
+                                Label(
+                                    title: { Text("准备 Bootstrap… \(seconds)").bold() },
+                                    icon: { Image(systemName: "chair") }
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(25)
+                            } else {
+                                Label(
+                                    title: { Text("Bootstrap").bold() },
+                                    icon: { Image(systemName: "chair") }
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(25)
+                            }
                         } else if ProcessInfo.processInfo.operatingSystemVersion.majorVersion>=15 {
-                            Label(
-                                title: { Text("Install").bold() },
-                                icon: { Image(systemName: "chair") }
-                            )
-                            .frame(maxWidth: .infinity)
-                            .padding(25)
+                            if let seconds = autoBootstrap.countdownSeconds {
+                                Label(
+                                    title: { Text("准备 Bootstrap… \(seconds)").bold() },
+                                    icon: { Image(systemName: "chair") }
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(25)
+                            } else {
+                                Label(
+                                    title: { Text("Install").bold() },
+                                    icon: { Image(systemName: "chair") }
+                                )
+                                .frame(maxWidth: .infinity)
+                                .padding(25)
+                            }
                         } else {
                             Label(
                                 title: { Text("Unsupported").bold() },
@@ -151,6 +252,7 @@ struct MainView: View {
                     HStack {
                         
                         Button {
+                            AutoBootstrapManager.shared.cancel()
                             showAppView.toggle()
                             Haptic.shared.play(.light)
                         } label: {
@@ -169,6 +271,7 @@ struct MainView: View {
                         
                         Button {
                             withAnimation(niceAnimation) {
+                                AutoBootstrapManager.shared.cancel()
                                 Haptic.shared.play(.light)
                                 showOptions = true
                             }
@@ -241,6 +344,7 @@ struct MainView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             Button {
                 withAnimation(niceAnimation) {
+                    AutoBootstrapManager.shared.cancel()
                     Haptic.shared.play(.light)
                     showCredits.toggle()
                 }
@@ -269,13 +373,14 @@ struct MainView: View {
         }
         .onAppear {
             initFromSwiftUI()
-            Task {
-                do {
-                    try await checkForUpdates()
-                } catch {
+            AutoBootstrapManager.shared.startIfNeeded()
+            // Task {
+            //     do {
+            //         try await checkForUpdates()
+            //     } catch {
 
-                }
-            }
+            //     }
+            // }
         }
         .sheet(isPresented: $showAppView) {
             AppViewControllerWrapper()

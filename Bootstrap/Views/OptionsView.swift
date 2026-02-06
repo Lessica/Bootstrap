@@ -36,6 +36,7 @@ struct OptionsView: View {
                         .font(Font.system(size: 35))
                     
                     Button {
+                        AutoBootstrapManager.shared.cancel()
                         Haptic.shared.play(.light)
                         withAnimation(niceAnimation) {
                             showOptions = false
@@ -119,6 +120,7 @@ struct OptionsView: View {
                             VStack(alignment: .leading, spacing: 12, content: {
                                 
                                 Button {
+                                    AutoBootstrapManager.shared.cancel()
                                     Haptic.shared.play(.light)
                                     respringAction()
                                 } label: {
@@ -140,6 +142,7 @@ struct OptionsView: View {
                                 .disabled(!isSystemBootstrapped() || !checkBootstrapVersion())
                                 
                                 Button {
+                                    AutoBootstrapManager.shared.cancel()
                                     Haptic.shared.play(.light)
                                     rebuildappsAction()
                                 } label: {
@@ -161,6 +164,7 @@ struct OptionsView: View {
                                 .disabled(!isSystemBootstrapped() || !checkBootstrapVersion())
                                 
                                 Button {
+                                    AutoBootstrapManager.shared.cancel()
                                     Haptic.shared.play(.light)
                                     rebuildIconCacheAction()
                                 } label: {
@@ -180,12 +184,34 @@ struct OptionsView: View {
                                         .opacity(0.3)
                                 )
                                 .disabled(!isSystemBootstrapped() || !checkBootstrapVersion())
-                                
+
+                                Button {
+                                    AutoBootstrapManager.shared.cancel()
+                                    Haptic.shared.play(.light)
+                                    rebootAction()
+                                } label: {
+                                    Label(
+                                        title: { Text("Reboot Device") },
+                                        icon: { Image(systemName: "arrow.clockwise") }
+                                    )
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .foregroundColor(Color.init(uiColor: UIColor.label))
+                                }
+                                .frame(width: 250)
+                                .background(Color.clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .stroke(.gray, lineWidth: 1)
+                                        .opacity(0.3)
+                                )
+
                                 if isSystemBootstrapped() && checkBootstrapVersion()
                                 {
                                     if launchctl_support()
                                     {
                                         Button {
+                                            AutoBootstrapManager.shared.cancel()
                                             Haptic.shared.play(.light)
                                             rebootUserspaceAction();
                                         } label: {
@@ -208,6 +234,7 @@ struct OptionsView: View {
                                     else
                                     {
                                         Button {
+                                            AutoBootstrapManager.shared.cancel()
                                             Haptic.shared.play(.light)
                                             if isAllCTBugAppsHidden() {
                                                 unhideAllCTBugApps()
@@ -239,6 +266,7 @@ struct OptionsView: View {
                                 }
                                 
                                 Button {
+                                    AutoBootstrapManager.shared.cancel()
                                     Haptic.shared.play(.light)
                                     resetMobilePassword()
                                 } label: {
@@ -260,6 +288,7 @@ struct OptionsView: View {
                                 .disabled(!isSystemBootstrapped() || !checkBootstrapVersion())
                                 
                                 Button {
+                                    AutoBootstrapManager.shared.cancel()
                                     Haptic.shared.play(.light)
                                     reinstallPackageManager()
                                 } label: {
@@ -282,6 +311,7 @@ struct OptionsView: View {
                                 
                                 if isBootstrapInstalled() {
                                     Button {
+                                        AutoBootstrapManager.shared.cancel()
                                         Haptic.shared.play(.light)
                                         unbootstrapAction()
                                     } label: {

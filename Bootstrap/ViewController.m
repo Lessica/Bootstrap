@@ -211,21 +211,21 @@ void initFromSwiftUI()
     [NSUserDefaults.appDefaults synchronize];
     SYSLOG("locale=%@", [NSUserDefaults.appDefaults valueForKey:@"locale"]);
 
-    if(isSystemBootstrapped())
-    {
-        if(!checkBootstrapVersion()) {
-            return;
-        }
+    // if(isSystemBootstrapped())
+    // {
+    //     if(!checkBootstrapVersion()) {
+    //         return;
+    //     }
         
-        if(checkServer()) {
-            [AppDelegate addLogText:Localized(@"bootstrap server check successful")];
-            checkAppsHidden();
-        }
+    //     if(checkServer()) {
+    //         [AppDelegate addLogText:Localized(@"bootstrap server check successful")];
+    //         checkAppsHidden();
+    //     }
 
-        [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
-            if(isSystemBootstrapped()) checkServer();
-        }];
-    }
+    //     [[NSNotificationCenter defaultCenter] addObserverForName:UIApplicationWillEnterForegroundNotification object:nil queue:nil usingBlock:^(NSNotification * _Nonnull note) {
+    //         if(isSystemBootstrapped()) checkServer();
+    //     }];
+    // }
 
     if(!IconCacheRebuilding && isSystemBootstrapped() && !launchctl_support()) {
         if([UIApplication.sharedApplication canOpenURL:[NSURL URLWithString:@"filza://"]]
@@ -492,6 +492,11 @@ BOOL opensshAction(BOOL enable)
 void rebootUserspaceAction()
 {
     spawn_bootstrap_binary((char*[]){"/usr/bin/launchctl","reboot","userspace",NULL}, nil, nil);
+}
+
+void rebootAction()
+{
+    ASSERT(spawn_root(NSBundle.mainBundle.executablePath, @[@"reboot"], nil, nil)==0);
 }
 
 int exploitStart(NSString* execDir)

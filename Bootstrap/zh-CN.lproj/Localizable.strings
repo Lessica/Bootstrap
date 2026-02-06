@@ -1,9 +1,12 @@
 "Settings" = "设置";
 "Tweak Enable" = "启用插件";
 "OpenSSH" = "OpenSSH";
+"Colors" = "颜色";
 "Respring" = "注销";
 "Rebuild Apps" = "重建应用程序";
 "Rebuild Icon Cache" = "重建图标缓存";
+"Reboot Userspace" = "重启用户空间";
+"Reset Mobile Password" = "重设 “mobile” 密码";
 "Reinstall Sileo & Zebra" = "重新安装 Sileo & Zebra"; 
 "Fix App Notification" = "修复应用通知"; 
 "Uninstall" = "卸载";
