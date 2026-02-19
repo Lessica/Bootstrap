@@ -591,7 +591,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/basebin/common/lib",
 				);
-				MARKETING_VERSION = "2.0-beta5";
+				MARKETING_VERSION = "2.0-beta6";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.roothide.Bootstrap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -637,7 +637,7 @@
 					"$(PROJECT_DIR)",
 					"$(PROJECT_DIR)/basebin/common/lib",
 				);
-				MARKETING_VERSION = "2.0-beta5";
+				MARKETING_VERSION = "2.0-beta6";
 				OTHER_LDFLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = com.roothide.Bootstrap;
 				PRODUCT_NAME = "$(TARGET_NAME)";
